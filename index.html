@@ -2,188 +2,74 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>Fix My Site: The Performance Budget Challenge</title>
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Fix My Site: The Performance Gauntlet</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
-<style>
-  :root{
-    --ink:#0a0f1a; --panel:#111b2c; --panel-alt:#152238;
-    --grid:rgba(120,160,210,0.06); --border:rgba(140,175,220,0.16);
-    --text:#eaf0f7; --text-dim:#9db0c7; --text-faint:#5f7189;
-    --client:#54d6ff; --server:#3fe0a5; --danger:#ff5c6c; --warn:#ffb454;
-    --sans:'Inter',sans-serif; --display:'Space Grotesk',sans-serif; --mono:'IBM Plex Mono',monospace;
-  }
-  *{box-sizing:border-box;}
-  html,body{height:100%;}
-  body{
-    margin:0; min-height:100vh; background:var(--ink); color:var(--text);
-    font-family:var(--sans); padding:2rem 1.1rem;
-  }
-  body::before{
-    content:""; position:fixed; inset:0;
-    background-image:
-      repeating-linear-gradient(to right, var(--grid) 0 1px, transparent 1px 88px),
-      repeating-linear-gradient(to bottom, var(--grid) 0 1px, transparent 1px 88px);
-    pointer-events:none; z-index:0;
-  }
-  h1,h2,h3{ font-family:var(--display); font-weight:600; margin:0; letter-spacing:-0.01em; }
-  p{ color:var(--text-dim); line-height:1.5; margin:0; }
-  code{ font-family:var(--mono); background:rgba(255,255,255,.06); padding:.1em .35em; border-radius:3px; font-size:.9em; }
-  button{ font-family:var(--sans); cursor:pointer; border:none; }
-
-  #app{ position:relative; z-index:1; max-width:760px; margin:0 auto; }
-  .screen{ display:none; }
-  .screen.active{ display:block; animation:rise .35s ease; }
-  @keyframes rise{ from{opacity:0; transform:translateY(8px);} to{opacity:1; transform:translateY(0);} }
-
-  .card{ background:var(--panel); border:1px solid var(--border); border-radius:14px; padding:1.9rem 1.8rem; box-shadow:0 20px 60px rgba(0,0,0,.35); }
-  .kicker{ font-family:var(--mono); font-size:.78rem; color:var(--text-faint); letter-spacing:.05em; margin-bottom:.7rem; }
-  .rule{ width:56px; height:2px; background:var(--client); margin:1.2rem 0; }
-
-  /* Start screen */
-  #screen-start h1{ font-size:clamp(1.7rem,6vw,2.3rem); line-height:1.15; }
-  .sub{ margin-top:.8rem; font-size:1rem; }
-  .meta-row{ display:flex; gap:1.3rem; margin:1.3rem 0 .2rem; font-family:var(--mono); font-size:.76rem; color:var(--text-faint); }
-  .meta-row span b{ color:var(--text-dim); font-weight:500; }
-  label{ display:block; font-family:var(--mono); font-size:.75rem; color:var(--text-faint); letter-spacing:.04em; margin:1.4rem 0 .5rem; }
-  input[type=text]{
-    width:100%; background:var(--panel-alt); border:1px solid var(--border); border-radius:8px;
-    color:var(--text); font-family:var(--sans); font-size:1rem; padding:.8rem 1rem; outline:none;
-  }
-  input[type=text]:focus{ border-color:var(--client); }
-  .btn-primary{
-    width:100%; margin-top:1.1rem; padding:.9rem 1.2rem; border-radius:8px;
-    background:linear-gradient(135deg,var(--client),var(--server)); color:#04121a;
-    font-weight:700; font-size:1rem; transition:transform .15s ease, box-shadow .15s ease;
-  }
-  .btn-primary:hover{ transform:translateY(-1px); box-shadow:0 8px 24px rgba(84,214,255,.25); }
-  .btn-primary:disabled{ opacity:.4; cursor:not-allowed; transform:none; box-shadow:none; }
-  .btn-ghost{
-    width:100%; margin-top:.7rem; padding:.8rem 1.2rem; border-radius:8px;
-    background:transparent; border:1px solid var(--border); color:var(--text-dim); font-size:.92rem;
-  }
-  .btn-ghost:hover{ border-color:var(--client); color:var(--client); }
-  .note{ margin-top:1.3rem; font-size:.76rem; color:var(--text-faint); font-family:var(--mono); line-height:1.5; }
-
-  /* Round problem banner */
-  .round-hud{ display:flex; align-items:center; justify-content:space-between; margin-bottom:1rem; }
-  .round-tag{ font-family:var(--mono); font-size:.75rem; color:var(--text-faint); }
-  .problem-card{
-    background:var(--panel-alt); border:1px solid var(--border); border-radius:10px;
-    padding:1.1rem 1.2rem; margin-bottom:1.3rem;
-  }
-  .problem-card .site-name{ font-family:var(--display); font-size:1.15rem; font-weight:700; color:var(--client); margin-bottom:.4rem; }
-  .problem-card p{ font-size:.92rem; }
-
-  /* Game HUD */
-  .top-bar{ display:flex; align-items:center; justify-content:space-between; gap:1rem; margin-bottom:1rem; }
-  .budget{ flex:1; }
-  .budget-label{ display:flex; justify-content:space-between; font-family:var(--mono); font-size:.72rem; color:var(--text-faint); margin-bottom:.3rem; }
-  .budget-track{ height:8px; border-radius:5px; background:var(--panel-alt); border:1px solid var(--border); overflow:hidden; }
-  .budget-fill{ height:100%; background:linear-gradient(to right,var(--server),var(--warn),var(--danger)); transition:width .3s ease; }
-  .ship-btn{
-    flex:none; padding:.65rem 1.1rem; border-radius:8px; font-weight:700; font-size:.85rem;
-    background:linear-gradient(135deg,var(--client),var(--server)); color:#04121a;
-    transition:opacity .15s ease, transform .15s ease;
-  }
-  .ship-btn:disabled{ opacity:.35; cursor:not-allowed; }
-  .ship-btn:not(:disabled):hover{ transform:translateY(-1px); }
-
-  .dashboard{ display:grid; grid-template-columns:repeat(4,1fr); gap:.6rem; margin-bottom:1.4rem; }
-  .metric{ background:var(--panel); border:1px solid var(--border); border-radius:10px; padding:.8rem .6rem; text-align:center; transition:border-color .3s ease; }
-  .metric .val{ font-family:var(--display); font-size:1.2rem; font-weight:700; transition:color .3s ease; }
-  .metric .lbl{ font-family:var(--mono); font-size:.6rem; color:var(--text-faint); margin-top:.15rem; }
-  .metric .status{ font-family:var(--mono); font-size:.56rem; margin-top:.35rem; padding:.15em .5em; border-radius:10px; display:inline-block; letter-spacing:.03em; }
-  .metric.good{ border-color:rgba(63,224,165,.4); } .metric.good .val{ color:var(--server); } .metric.good .status{ color:var(--server); background:rgba(63,224,165,.1); }
-  .metric.mid{ border-color:rgba(255,180,84,.4); } .metric.mid .val{ color:var(--warn); } .metric.mid .status{ color:var(--warn); background:rgba(255,180,84,.1); }
-  .metric.bad{ border-color:rgba(255,92,108,.4); } .metric.bad .val{ color:var(--danger); } .metric.bad .status{ color:var(--danger); background:rgba(255,92,108,.1); }
-
-  .section-h{ font-family:var(--mono); font-size:.75rem; color:var(--text-faint); letter-spacing:.05em; margin:1.3rem 0 .7rem; }
-  .actions{ display:grid; gap:.55rem; max-height:44vh; overflow-y:auto; padding-right:.2rem; }
-  .action{
-    background:var(--panel); border:1px solid var(--border); border-radius:10px; padding:.85rem 1rem;
-    display:flex; align-items:center; gap:.8rem; transition:border-color .15s ease, background .15s ease;
-  }
-  .action.on{ border-color:var(--client); background:rgba(84,214,255,.06); }
-  .action.locked{ opacity:.4; }
-  .a-toggle{
-    flex:none; width:2rem; height:2rem; border-radius:50%; border:1px solid var(--border);
-    background:var(--panel-alt); color:var(--text-dim); display:flex; align-items:center; justify-content:center; font-size:1rem;
-  }
-  .action.on .a-toggle{ background:var(--client); color:#04121a; border-color:var(--client); }
-  .a-body{ flex:1; min-width:0; }
-  .a-top{ display:flex; align-items:center; justify-content:space-between; gap:.6rem; }
-  .a-name{ font-size:.94rem; color:var(--text); font-weight:600; }
-  .a-cost{ font-family:var(--mono); font-size:.68rem; color:var(--text-faint); background:var(--panel-alt); border:1px solid var(--border); border-radius:20px; padding:.15em .55em; flex:none; }
-  .a-tag{ font-family:var(--mono); font-size:.62rem; color:var(--client); letter-spacing:.03em; margin-top:.15rem; }
-  .a-note{ font-size:.82rem; color:var(--text-dim); margin-top:.3rem; line-height:1.4; }
-
-  /* Round result + final results */
-  .grade{
-    display:inline-flex; align-items:center; justify-content:center; width:4rem; height:4rem; border-radius:50%;
-    font-family:var(--display); font-size:1.9rem; font-weight:700; border:2px solid var(--client); color:var(--client); margin-bottom:.7rem;
-  }
-  .grade-label{ font-family:var(--mono); font-size:.82rem; color:var(--text-faint); letter-spacing:.05em; margin-bottom:1.1rem; }
-  .compare{ display:grid; gap:.55rem; margin-bottom:1.2rem; }
-  .compare-row{ display:grid; grid-template-columns:74px 1fr 36px 1fr; align-items:center; gap:.6rem; font-family:var(--mono); font-size:.78rem; }
-  .compare-row .lbl{ color:var(--text-faint); }
-  .compare-row .before{ color:var(--danger); text-align:right; }
-  .compare-row .arrow{ color:var(--text-faint); text-align:center; }
-  .compare-row .after{ color:var(--server); }
-  .score-line{ font-family:var(--mono); font-size:.85rem; color:var(--text-dim); margin-bottom:1.2rem; }
-  .score-line b{ color:var(--text); font-family:var(--display); font-size:1.25rem; }
-
-  .round-summary{ display:grid; gap:.4rem; margin-bottom:1.3rem; }
-  .rs-row{ display:flex; align-items:center; gap:.7rem; background:var(--panel-alt); border:1px solid var(--border); border-radius:7px; padding:.55rem .8rem; font-size:.86rem; }
-  .rs-row .rs-grade{ font-family:var(--mono); width:1.6rem; flex:none; color:var(--client); font-weight:700; }
-  .rs-row .rs-name{ flex:1; color:var(--text); }
-  .rs-row .rs-score{ font-family:var(--mono); color:var(--server); }
-
-  .lb-head{ display:flex; align-items:center; justify-content:space-between; margin:1.4rem 0 .7rem; }
-  .lb-head h3{ font-size:.98rem; }
-  .lb-refresh{ background:transparent; border:1px solid var(--border); color:var(--text-dim); font-family:var(--mono); font-size:.7rem; padding:.35em .7em; border-radius:6px; }
-  .lb-refresh:hover{ border-color:var(--client); color:var(--client); }
-  .lb-list{ display:grid; gap:.4rem; }
-  .lb-row{ display:flex; align-items:center; gap:.7rem; background:var(--panel-alt); border:1px solid var(--border); border-radius:7px; padding:.55rem .8rem; font-size:.86rem; }
-  .lb-row .rank{ font-family:var(--mono); color:var(--text-faint); width:1.4rem; flex:none; }
-  .lb-row .nm{ flex:1; color:var(--text); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
-  .lb-row .sc{ font-family:var(--mono); color:var(--server); }
-  .lb-row.me{ border-color:var(--client); }
-  .lb-empty{ font-size:.86rem; color:var(--text-faint); font-family:var(--mono); text-align:center; padding:1rem 0; }
-
-  @media (max-width:520px){
-    .dashboard{ grid-template-columns:1fr 1fr; }
-    .compare-row{ grid-template-columns:56px 1fr 26px 1fr; font-size:.72rem; }
-  }
-</style>
+<link rel="stylesheet" href="styles.css">
 </head>
 <body>
 <div id="app">
 
-  <div class="screen active" id="screen-start">
+  <!-- Player: landing with QR -->
+  <div class="screen active" id="screen-qr">
     <div class="card">
       <div class="kicker">PERFORMANCE OPTIMIZATION &mdash; LIVE EXERCISE</div>
-      <h1>Fix My Site:<br>The Budget Challenge</h1>
+      <h1>Fix My Site:<br>The Performance Gauntlet</h1>
       <div class="rule"></div>
-      <p class="sub">Five broken sites, one Sprint budget each. Read the problem, pick your optimizations, and watch Core Web Vitals move in real time. You can't fix everything &mdash; make every point count.</p>
+      <p>Scan to join the room. Five broken sites, one sprint budget each. The host runs the clock &mdash; the site appears on your device when the round starts.</p>
       <div class="meta-row">
-        <span><b>5</b> scenarios</span>
-        <span><b>12 SP</b> budget per round</span>
-        <span><b>live</b> leaderboard</span>
+        <span><b id="qrRounds">5</b> scenarios</span>
+        <span><b id="qrBudget">12</b> SP each</span>
+        <span><b id="qrSeconds">90</b>s per round</span>
+        <span><b id="qrPlayers">0</b> joined</span>
       </div>
-      <label for="nameInput">Your name (shown on the shared leaderboard)</label>
-      <input type="text" id="nameInput" maxlength="24" placeholder="e.g. Priya, Team Falcon..." autocomplete="off">
-      <button class="btn-primary" id="startBtn">Start Optimizing &rarr;</button>
-      <div class="note">Everyone plays their own copy of each site. Your final score posts to a leaderboard visible to everyone else playing.</div>
+      <div class="qr-box" id="qrBox"></div>
+      <p class="join-url" id="joinUrl"></p>
+      <button class="btn-primary" id="joinHereBtn">Join on this device &rarr;</button>
+      <div class="err" id="qrErr" hidden></div>
     </div>
   </div>
 
+  <!-- Player: register -->
+  <div class="screen" id="screen-join">
+    <div class="card">
+      <div class="kicker">ROUND CHECK-IN</div>
+      <h1>Who's optimizing?</h1>
+      <div class="rule"></div>
+      <label for="nameInput">Your name (shown on the shared leaderboard)</label>
+      <input type="text" id="nameInput" maxlength="24" placeholder="e.g. Priya, Team Falcon..." autocomplete="off">
+      <button class="btn-primary" id="joinBtn">Enter the Gauntlet &rarr;</button>
+      <div class="err" id="joinErr" hidden></div>
+      <div class="note">Everyone plays on their own device. Scores post to a leaderboard everyone can see.</div>
+    </div>
+  </div>
+
+  <!-- Player: lobby -->
+  <div class="screen" id="screen-wait">
+    <div class="card">
+      <div class="kicker">YOU'RE IN</div>
+      <h1 id="waitName">&mdash;</h1>
+      <div class="rule"></div>
+      <p>Waiting for the host to open the first site. Keep this tab open.</p>
+      <div class="rules" id="rulesBox"></div>
+      <div class="meta-row"><span><b id="waitPlayers">0</b> in the room</span></div>
+      <div class="lb-head"><h3>In the room</h3></div>
+      <div class="lb-list" id="waitList"></div>
+    </div>
+  </div>
+
+  <!-- Player: the round -->
   <div class="screen" id="screen-game">
     <div class="card">
-      <div class="round-hud">
-        <span class="round-tag" id="roundTag">SCENARIO 1 / 5</span>
+      <div class="hud">
+        <div class="hud-left" id="roundLabel">SCENARIO 1 / 5</div>
+        <div class="hud-right">
+          <span class="pill clock" id="clockPill">90s</span>
+          <span class="pill score">&#9670; <span id="scoreVal">0</span></span>
+        </div>
       </div>
+      <div class="timer-track"><div class="timer-fill" id="timerFill"></div></div>
 
       <div class="problem-card">
         <div class="site-name" id="siteName">&mdash;</div>
@@ -192,7 +78,7 @@
 
       <div class="top-bar">
         <div class="budget">
-          <div class="budget-label"><span>SPRINT BUDGET</span><span id="budgetText">0 / 12 used</span></div>
+          <div class="budget-label"><span>SPRINT BUDGET</span><span id="budgetText">0 / 12 SP</span></div>
           <div class="budget-track"><div class="budget-fill" id="budgetFill" style="width:0%;"></div></div>
         </div>
         <button class="ship-btn" id="shipBtn">Ship it &rarr;</button>
@@ -200,400 +86,117 @@
 
       <div class="dashboard" id="dashboard"></div>
 
+      <details class="rules-toggle">
+        <summary>How this round is scored</summary>
+        <div class="rules" id="rulesBoxGame"></div>
+      </details>
+
       <div class="section-h">CHOOSE YOUR OPTIMIZATIONS</div>
       <div class="actions" id="actionsWrap"></div>
+      <div class="standby" id="gameStandby" hidden></div>
     </div>
   </div>
 
-  <div class="screen" id="screen-round-result">
+  <!-- Player: round result -->
+  <div class="screen" id="screen-result">
     <div class="card">
-      <div class="kicker" id="roundResultTag">ROUND 1 RESULT</div>
-      <div class="grade" id="rGradeCircle">?</div>
-      <div class="grade-label" id="rGradeLabel">&mdash;</div>
+      <div class="kicker" id="resultTag">SCENARIO 1 RESULT</div>
+      <div class="grade-row">
+        <div class="grade" id="rGrade">?</div>
+        <div>
+          <div class="grade-label" id="rLabel">&mdash;</div>
+          <div class="grade-why" id="rWhy">&mdash;</div>
+        </div>
+      </div>
 
-      <div class="compare" id="rCompareWrap"></div>
-      <div class="score-line">Round score: <b id="rScore">0</b> &middot; <span id="rSpent">0/12 SP used</span></div>
-
-      <button class="btn-primary" id="nextRoundBtn">Next Scenario &rarr;</button>
+      <div class="compare" id="rCompare"></div>
+      <div class="breakdown" id="rBreakdown"></div>
+      <p class="verdict-note" id="rNote"></p>
+      <div class="standby live" id="resultStandby">Waiting for the host to open the next site&hellip;</div>
     </div>
   </div>
 
+  <!-- Player: final results -->
   <div class="screen" id="screen-end">
     <div class="card">
       <div class="kicker">FINAL RESULTS</div>
-      <div class="grade" id="gradeCircle">?</div>
-      <div class="grade-label" id="gradeLabel">&mdash;</div>
-
-      <div class="round-summary" id="roundSummary"></div>
-      <div class="score-line">Total score: <b id="finalScore">0</b></div>
-
-      <div class="lb-head">
-        <h3>Live leaderboard</h3>
-        <button class="lb-refresh" id="refreshBtn">refresh</button>
+      <div class="grade-row">
+        <div class="grade" id="fGrade">?</div>
+        <div>
+          <div class="grade-label" id="fLabel">&mdash;</div>
+          <div class="grade-why" id="fWhy">&mdash;</div>
+        </div>
       </div>
-      <div class="lb-list" id="lbList"><div class="lb-empty">Loading&hellip;</div></div>
-      <button class="btn-ghost" id="againBtn">Play again</button>
+      <div class="score-big" id="finalScore">0</div>
+      <div class="score-sub" id="finalName">points</div>
+      <div class="stat-row">
+        <div class="stat"><div class="num" id="statPassed">0/5</div><div class="lbl">SITES PASSING CWV</div></div>
+        <div class="stat"><div class="num" id="statSpent">0</div><div class="lbl">SP SPENT OF 60</div></div>
+      </div>
+      <div class="lb-head"><h3>Your rounds</h3></div>
+      <div class="lb-list" id="roundSummary"></div>
+      <div class="lb-head"><h3>Live leaderboard</h3></div>
+      <div class="lb-list" id="lbList"></div>
+      <div class="rules" id="rulesBoxEnd"></div>
+    </div>
+  </div>
+
+  <!-- Host -->
+  <div class="screen" id="screen-admin">
+    <div class="card">
+      <div class="kicker">HOST CONSOLE</div>
+      <h1 style="font-size:1.5rem;">Fix My Site &mdash; Performance Gauntlet</h1>
+      <div class="rule"></div>
+      <div class="phase-line">
+        <span>state <b id="admPhase">lobby</b></span>
+        <span>scenario <b id="admRound">&mdash;</b></span>
+        <span>players <b id="admPlayers">0</b></span>
+        <span>shipped <b id="admShipped">0</b></span>
+        <span>clock <b id="admClock">&mdash;</b></span>
+      </div>
+
+      <div class="admin-grid">
+        <div class="panel">
+          <h3>Round control</h3>
+          <label for="sPicker">Scenario</label>
+          <select id="sPicker"></select>
+          <div class="admin-q" id="admProblem">&mdash;</div>
+          <div class="admin-a" id="admFix">&mdash;</div>
+          <div class="btn-row">
+            <button class="btn-sm go" id="startBtn">Start scenario 1</button>
+            <button class="btn-sm" id="endBtn">End round now</button>
+          </div>
+          <div class="btn-row">
+            <button class="btn-sm" id="prevBtn">&larr; Previous</button>
+            <button class="btn-sm" id="lobbyBtn">Back to lobby</button>
+          </div>
+          <div class="btn-row">
+            <button class="btn-sm danger" id="resetBtn">Reset game &amp; clear players</button>
+          </div>
+        </div>
+
+        <div class="panel">
+          <h3>Join link</h3>
+          <div class="qr-box" id="qrBoxAdm"></div>
+          <p class="join-url" id="joinUrlAdm"></p>
+          <label for="tokenInput" style="margin-top:1rem;">Host token</label>
+          <input type="text" id="tokenInput" placeholder="ADMIN_TOKEN" autocomplete="off">
+        </div>
+      </div>
+
+      <div class="lb-head"><h3>What the room bought this round</h3></div>
+      <div class="tally" id="admTally"></div>
+
+      <div class="lb-head"><h3>Leaderboard</h3></div>
+      <div class="lb-list" id="admList"></div>
+      <div class="err" id="admErr" hidden></div>
     </div>
   </div>
 
 </div>
 
-<script>
-(function(){
-
-const BUDGET_MAX = 12;
-const TARGET = { lcp:2500, inp:200, cls:0.10 };
-const MIN = { lcp:900, inp:40, cls:0, weight:300 };
-
-const SCENARIOS = [
-  {
-    id:'slowmart', name:'SlowMart',
-    problem:'An e-commerce product page. The hero product photo is enormous, and a reviews widget pops in late and shoves the "Buy Now" button down the page.',
-    start:{ lcp:4800, inp:320, cls:0.32, weight:4200 }
-  },
-  {
-    id:'dailybyte', name:'DailyByte',
-    problem:'A news site article page. Ad scripts pile up above the fold, and a comments section loads in as one chunky block after everything else has rendered.',
-    start:{ lcp:5200, inp:280, cls:0.28, weight:3600 }
-  },
-  {
-    id:'pulsecrm', name:'PulseCRM',
-    problem:'An internal SaaS dashboard. A giant JavaScript bundle loads for every screen, and filtering the 5,000-row customer table freezes the whole page.',
-    start:{ lcp:3400, inp:450, cls:0.08, weight:5100 }
-  },
-  {
-    id:'wanderly', name:'Wanderly',
-    problem:'A travel booking site. Destination photos are huge and uncompressed, and a booking widget shoves the whole layout down once it finally finishes loading.',
-    start:{ lcp:5600, inp:260, cls:0.30, weight:4800 }
-  },
-  {
-    id:'fittrack', name:'FitTrack',
-    problem:'A fitness app landing page. An autoplaying video sits behind the hero text, and a social feed widget animates in from three different third-party embeds.',
-    start:{ lcp:6000, inp:300, cls:0.22, weight:5500 }
-  }
-];
-
-const ACTIONS = [
-  { id:'compress-hero', tag:'IMAGES', name:'Compress & resize the hero image', cost:2,
-    note:'A full-resolution hero shipped into a small container. Resizing and compressing it cuts the biggest single asset on the page.',
-    fx:{lcp:-900, weight:-600} },
-  { id:'webp', tag:'IMAGES', name:'Convert images to WebP/AVIF', cost:1,
-    note:'Modern formats give the same visual quality at a noticeably smaller file size than JPG or PNG.',
-    fx:{lcp:-300, weight:-350} },
-  { id:'lazy-images', tag:'IMAGES', name:'Lazy load offscreen images', cost:1,
-    note:'Images below the fold stop competing for bandwidth with what the user can actually see right now.',
-    fx:{lcp:-250, weight:-150} },
-  { id:'code-split', tag:'BUNDLES', name:'Code-split routes & features', cost:2,
-    note:'Breaks one giant bundle into route-sized chunks, so the browser downloads only what this page needs.',
-    fx:{lcp:-250, inp:-70, weight:-450} },
-  { id:'tree-shake', tag:'BUNDLES', name:'Tree-shake unused JavaScript', cost:1,
-    note:'Removes imported-but-never-used code from the production bundle.',
-    fx:{inp:-25, weight:-300} },
-  { id:'brotli', tag:'BUNDLES', name:'Enable Brotli compression', cost:1,
-    note:'Compresses text assets at the server/CDN level before they ever hit the network.',
-    fx:{lcp:-100, weight:-400} },
-  { id:'preload', tag:'LOADING', name:'Preload the hero image & critical font', cost:1,
-    note:'Tells the browser to start fetching the most important asset immediately, instead of discovering it late.',
-    fx:{lcp:-300} },
-  { id:'preconnect', tag:'LOADING', name:'Preconnect to font & CDN origins', cost:1,
-    note:'Finishes DNS + TLS setup for third-party domains ahead of time, so the real request skips straight to downloading.',
-    fx:{lcp:-120} },
-  { id:'defer-js', tag:'LOADING', name:'Defer non-critical JavaScript', cost:1,
-    note:'Stops scripts the page doesn\u2019t need immediately from blocking HTML parsing and first render.',
-    fx:{lcp:-200, inp:-30} },
-  { id:'trim-third-party', tag:'REQUESTS', name:'Trim third-party scripts', cost:2,
-    note:'Every analytics, ad, and widget script adds its own request and execution cost. Fewer of them, less to block on.',
-    fx:{lcp:-100, inp:-110, weight:-250} },
-  { id:'cdn', tag:'CACHING', name:'Put static assets on a CDN', cost:2,
-    note:'Serves files from a server physically closer to the visitor instead of one origin far away.',
-    fx:{lcp:-350} },
-  { id:'cache-headers', tag:'CACHING', name:'Add proper cache headers', cost:1,
-    note:'Cache-Control and ETag let repeat requests skip re-downloading files that haven\u2019t changed.',
-    fx:{lcp:-80, weight:-100} },
-  { id:'reserve-space', tag:'LAYOUT', name:'Reserve space for images & embeds', cost:1,
-    note:'Setting width and height up front stops the page from jumping around as content loads in.',
-    fx:{cls:-0.14} },
-  { id:'font-swap', tag:'LAYOUT', name:'Preload fonts with font-display: swap', cost:1,
-    note:'Avoids the invisible-text flash and the layout jump when a custom font finally arrives.',
-    fx:{cls:-0.05, lcp:-60} },
-  { id:'no-late-inject', tag:'LAYOUT', name:'Stop late-injected content from shifting the page', cost:1,
-    note:'Banners and embeds that appear after the page has already rendered push everything else around.',
-    fx:{cls:-0.09} },
-  { id:'virtualize', tag:'RUNTIME', name:'Virtualize the long list or table', cost:2,
-    note:'Renders only the rows currently in the viewport instead of the entire dataset at once.',
-    fx:{inp:-55, weight:-120} },
-  { id:'debounce', tag:'RUNTIME', name:'Debounce search & filter inputs', cost:1,
-    note:'Waits for typing to pause before running the filter, instead of firing on every keystroke.',
-    fx:{inp:-45} },
-  { id:'ssr', tag:'RENDERING', name:'Server-render the page (SSR/SSG)', cost:2,
-    note:'Sends HTML that already has content, instead of an empty shell the browser has to fill in with JavaScript.',
-    fx:{lcp:-350, inp:-20} }
-];
-
-let state = { name:'', roundIndex:0, selected:new Set(), roundResults:[] };
-
-const $ = (id) => document.getElementById(id);
-function showScreen(id){
-  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
-  $(id).classList.add('active');
-}
-
-/* ---------- metric computation ---------- */
-function currentSpent(){
-  let total = 0;
-  state.selected.forEach(id=>{ const a = ACTIONS.find(x=>x.id===id); if(a) total += a.cost; });
-  return total;
-}
-function currentMetrics(scenario){
-  const start = scenario.start;
-  const m = { lcp:start.lcp, inp:start.inp, cls:start.cls, weight:start.weight };
-  state.selected.forEach(id=>{
-    const a = ACTIONS.find(x=>x.id===id);
-    if(!a) return;
-    if(a.fx.lcp) m.lcp += a.fx.lcp;
-    if(a.fx.inp) m.inp += a.fx.inp;
-    if(a.fx.cls) m.cls += a.fx.cls;
-    if(a.fx.weight) m.weight += a.fx.weight;
-  });
-  m.lcp = Math.max(MIN.lcp, m.lcp);
-  m.inp = Math.max(MIN.inp, m.inp);
-  m.cls = Math.max(MIN.cls, Math.round(m.cls*100)/100);
-  m.weight = Math.max(MIN.weight, m.weight);
-  return m;
-}
-function statusFor(key, val){
-  if(key==='lcp') return val<=2500 ? 'good' : val<=4000 ? 'mid' : 'bad';
-  if(key==='inp') return val<=200 ? 'good' : val<=500 ? 'mid' : 'bad';
-  if(key==='cls') return val<=0.10 ? 'good' : val<=0.25 ? 'mid' : 'bad';
-  if(key==='weight') return val<=1500 ? 'good' : val<=3000 ? 'mid' : 'bad';
-}
-function statusText(s){ return s==='good' ? 'GOOD' : s==='mid' ? 'NEEDS WORK' : 'POOR'; }
-
-/* ---------- start ---------- */
-$('startBtn').addEventListener('click', ()=>{
-  const raw = $('nameInput').value.trim();
-  state.name = raw || 'Anonymous';
-  state.roundIndex = 0;
-  state.roundResults = [];
-  showRound();
-});
-$('nameInput').addEventListener('keydown', (e)=>{ if(e.key==='Enter') $('startBtn').click(); });
-
-/* ---------- round setup ---------- */
-function showRound(){
-  state.selected = new Set();
-  const scenario = SCENARIOS[state.roundIndex];
-  $('roundTag').textContent = 'SCENARIO ' + (state.roundIndex+1) + ' / ' + SCENARIOS.length;
-  $('siteName').textContent = scenario.name;
-  $('siteProblem').textContent = scenario.problem;
-  showScreen('screen-game');
-  renderDashboard();
-  renderActions();
-}
-
-function renderDashboard(){
-  const scenario = SCENARIOS[state.roundIndex];
-  const m = currentMetrics(scenario);
-  const items = [
-    { key:'lcp', label:'LCP', display: (m.lcp/1000).toFixed(1)+'s' },
-    { key:'inp', label:'INP', display: Math.round(m.inp)+'ms' },
-    { key:'cls', label:'CLS', display: m.cls.toFixed(2) },
-    { key:'weight', label:'PAGE WEIGHT', display: (m.weight/1000).toFixed(1)+'MB' }
-  ];
-  $('dashboard').innerHTML = items.map(it=>{
-    const s = statusFor(it.key, it.key==='weight' ? m.weight : m[it.key]);
-    return `<div class="metric ${s}"><div class="val">${it.display}</div><div class="lbl">${it.label}</div><div class="status">${statusText(s)}</div></div>`;
-  }).join('');
-}
-
-function renderActions(){
-  const spent = currentSpent();
-  $('budgetText').textContent = spent + ' / ' + BUDGET_MAX + ' used';
-  $('budgetFill').style.width = Math.min(100, (spent/BUDGET_MAX)*100) + '%';
-  $('shipBtn').disabled = spent === 0;
-
-  const wrap = $('actionsWrap');
-  wrap.innerHTML = '';
-  ACTIONS.forEach(a=>{
-    const on = state.selected.has(a.id);
-    const wouldExceed = !on && (spent + a.cost > BUDGET_MAX);
-    const div = document.createElement('div');
-    div.className = 'action' + (on ? ' on' : '') + (wouldExceed ? ' locked' : '');
-    div.innerHTML = `
-      <div class="a-toggle">${on ? '\u2713' : '+'}</div>
-      <div class="a-body">
-        <div class="a-top"><span class="a-name">${a.name}</span><span class="a-cost">${a.cost} SP</span></div>
-        <div class="a-tag">${a.tag}</div>
-        <div class="a-note">${a.note}</div>
-      </div>`;
-    if(!wouldExceed || on){
-      div.addEventListener('click', ()=>{
-        if(on) state.selected.delete(a.id); else state.selected.add(a.id);
-        renderActions();
-        renderDashboard();
-      });
-    }
-    wrap.appendChild(div);
-  });
-}
-
-$('shipBtn').addEventListener('click', ()=>{
-  if($('shipBtn').disabled) return;
-  finishRound();
-});
-
-/* ---------- scoring ---------- */
-function pctToward(startV, val, targetV){
-  if(startV === targetV) return 100;
-  const p = (startV - val) / (startV - targetV);
-  return Math.max(0, Math.min(100, p*100));
-}
-
-function computeRoundResult(scenario){
-  const m = currentMetrics(scenario);
-  const spent = currentSpent();
-  const pLcp = pctToward(scenario.start.lcp, m.lcp, TARGET.lcp);
-  const pInp = pctToward(scenario.start.inp, m.inp, TARGET.inp);
-  const pCls = pctToward(scenario.start.cls, m.cls, TARGET.cls);
-  const efficiencyBonus = (BUDGET_MAX - spent) * 5;
-  const score = Math.round(pLcp + pInp + pCls + efficiencyBonus);
-
-  const greenCount = [m.lcp<=TARGET.lcp, m.inp<=TARGET.inp, m.cls<=TARGET.cls].filter(Boolean).length;
-  let grade, label;
-  if(greenCount===3 && spent<=10){ grade='S'; label='SPEED DEMON'; }
-  else if(greenCount===3){ grade='A'; label='FULLY OPTIMIZED'; }
-  else if(greenCount===2){ grade='B'; label='GETTING THERE'; }
-  else if(greenCount===1){ grade='C'; label='ROOM TO IMPROVE'; }
-  else { grade='D'; label='STILL MOLASSES'; }
-
-  return { scenario, m, spent, score, grade, label, greenCount };
-}
-
-function finishRound(){
-  const scenario = SCENARIOS[state.roundIndex];
-  const result = computeRoundResult(scenario);
-  state.roundResults.push(result);
-
-  $('roundResultTag').textContent = 'ROUND ' + (state.roundIndex+1) + ' RESULT \u2014 ' + scenario.name.toUpperCase();
-  $('rGradeCircle').textContent = result.grade;
-  $('rGradeLabel').textContent = result.label;
-  $('rScore').textContent = result.score;
-  $('rSpent').textContent = result.spent + '/' + BUDGET_MAX + ' SP used';
-
-  const rows = [
-    { l:'LCP', before:(scenario.start.lcp/1000).toFixed(1)+'s', after:(result.m.lcp/1000).toFixed(1)+'s' },
-    { l:'INP', before:scenario.start.inp+'ms', after:Math.round(result.m.inp)+'ms' },
-    { l:'CLS', before:scenario.start.cls.toFixed(2), after:result.m.cls.toFixed(2) },
-    { l:'WEIGHT', before:(scenario.start.weight/1000).toFixed(1)+'MB', after:(result.m.weight/1000).toFixed(1)+'MB' }
-  ];
-  $('rCompareWrap').innerHTML = rows.map(r=>`
-    <div class="compare-row">
-      <span class="lbl">${r.l}</span>
-      <span class="before">${r.before}</span>
-      <span class="arrow">&rarr;</span>
-      <span class="after">${r.after}</span>
-    </div>`).join('');
-
-  $('nextRoundBtn').textContent = (state.roundIndex < SCENARIOS.length-1) ? 'Next Scenario \u2192' : 'See Final Results \u2192';
-  showScreen('screen-round-result');
-}
-
-$('nextRoundBtn').addEventListener('click', ()=>{
-  state.roundIndex += 1;
-  if(state.roundIndex < SCENARIOS.length){
-    showRound();
-  } else {
-    showFinalResults();
-  }
-});
-
-/* ---------- final results ---------- */
-async function showFinalResults(){
-  showScreen('screen-end');
-
-  const totalScore = state.roundResults.reduce((s,r)=>s+r.score, 0);
-  const totalGreen = state.roundResults.reduce((s,r)=>s+r.greenCount, 0);
-  const totalSpent = state.roundResults.reduce((s,r)=>s+r.spent, 0);
-  const maxGreen = SCENARIOS.length * 3;
-
-  let grade, label;
-  if(totalGreen===maxGreen && totalSpent<=SCENARIOS.length*10){ grade='S'; label='SPEED DEMON'; }
-  else if(totalGreen===maxGreen){ grade='A'; label='FULLY OPTIMIZED'; }
-  else if(totalGreen>=maxGreen*0.66){ grade='B'; label='GETTING THERE'; }
-  else if(totalGreen>=maxGreen*0.33){ grade='C'; label='ROOM TO IMPROVE'; }
-  else { grade='D'; label='STILL MOLASSES'; }
-
-  $('gradeCircle').textContent = grade;
-  $('gradeLabel').textContent = label;
-  $('finalScore').textContent = totalScore;
-
-  $('roundSummary').innerHTML = state.roundResults.map(r=>`
-    <div class="rs-row">
-      <span class="rs-grade">${r.grade}</span>
-      <span class="rs-name">${r.scenario.name}</span>
-      <span class="rs-score">${r.score}</span>
-    </div>`).join('');
-
-  await submitScore(totalScore, grade);
-  await refreshLeaderboard(totalScore);
-}
-
-/* ---------- shared leaderboard ---------- */
-async function submitScore(totalScore, grade){
-  try{
-    const key = 'perf-budget-lb:' + Date.now() + '-' + Math.random().toString(36).slice(2,8);
-    const entry = { name: state.name, score: totalScore, grade: grade, ts: Date.now() };
-    await window.storage.set(key, JSON.stringify(entry), true);
-  }catch(e){
-    console.error('Could not submit score:', e);
-  }
-}
-
-async function refreshLeaderboard(){
-  const listEl = $('lbList');
-  listEl.innerHTML = '<div class="lb-empty">Loading&hellip;</div>';
-  try{
-    const listRes = await window.storage.list('perf-budget-lb:', true);
-    const keys = (listRes && listRes.keys) ? listRes.keys : [];
-    if(keys.length === 0){
-      listEl.innerHTML = '<div class="lb-empty">No scores yet \u2014 be the first!</div>';
-      return;
-    }
-    const entries = [];
-    await Promise.all(keys.map(async (k)=>{
-      try{
-        const r = await window.storage.get(k, true);
-        if(r && r.value){ entries.push(JSON.parse(r.value)); }
-      }catch(err){ /* skip unreadable entries */ }
-    }));
-    entries.sort((a,b)=> (b.score||0) - (a.score||0));
-    const top = entries.slice(0, 10);
-    listEl.innerHTML = '';
-    top.forEach((e, i)=>{
-      const row = document.createElement('div');
-      const isMe = e.name === state.name;
-      row.className = 'lb-row' + (isMe ? ' me' : '');
-      row.innerHTML = `<span class="rank">#${i+1}</span><span class="nm">${escapeHtml(e.name||'Anonymous')} <span style="color:var(--text-faint)">(${escapeHtml(e.grade||'')})</span></span><span class="sc">${e.score||0}</span>`;
-      listEl.appendChild(row);
-    });
-  }catch(e){
-    console.error('Could not load leaderboard:', e);
-    listEl.innerHTML = '<div class="lb-empty">Leaderboard unavailable right now.</div>';
-  }
-}
-
-function escapeHtml(str){
-  return String(str).replace(/[&<>"']/g, (c)=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-}
-
-$('refreshBtn').addEventListener('click', refreshLeaderboard);
-$('againBtn').addEventListener('click', ()=>{
-  showScreen('screen-start');
-  $('nameInput').value = state.name;
-  $('nameInput').focus();
-});
-
-})();
-</script>
+<script src="vendor/qrcode.min.js"></script>
+<script src="game.js"></script>
+<script src="app.js"></script>
 </body>
 </html>

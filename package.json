@@ -1,0 +1,12 @@
+{
+  "name": "performance-optimization-gauntlet",
+  "private": true,
+  "description": "Fix My Site — a live, multiplayer web performance exercise for a standup session.",
+  "scripts": {
+    "dev": "node dev.js",
+    "test": "node test-scoring.js"
+  },
+  "dependencies": {
+    "pg": "^8.13.0"
+  }
+}
